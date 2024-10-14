@@ -3,6 +3,7 @@ import { Page, BlogPosts } from "../typescript/pages";
 import getConfig from "next/config";
 import { FooterProps, HeaderProps } from "../typescript/layout";
 import { getEntry, getEntryByUrl } from "../contentstack-sdk";
+import { ProductList } from "../typescript/products";
 
 const { publicRuntimeConfig } = getConfig();
 const envConfig = process.env.CONTENTSTACK_API_KEY
@@ -79,3 +80,25 @@ export const getBlogPostRes = async (entryUrl: string): Promise<BlogPosts> => {
   liveEdit && addEditableTags(response[0], "blog_post", true);
   return response[0];
 };
+
+export const getProductList = async (): Promise<any> => {
+  const response = (await getEntry({
+    contentTypeUid: "products",
+    referenceFieldPath: [""],
+    jsonRtePath: [""],
+  })) as ProductList;
+  liveEdit && addEditableTags(response[0], "products", true);
+  return response[0];
+};
+
+export const getCategories = async (): Promise<any> => {
+  const response = (await getEntry({
+    contentTypeUid: "categories",
+    referenceFieldPath: [""],
+    jsonRtePath: [""],
+  })) as Array<any>;
+  liveEdit && addEditableTags(response[0][0], "categories", true);
+  return response[0][0];
+};
+
+   // entryUrl: "mens-accessories",

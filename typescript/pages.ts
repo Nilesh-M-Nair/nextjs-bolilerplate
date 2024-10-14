@@ -107,3 +107,6 @@ export type BlogPosts = {
   _owner: string;
   $: AdditionalParam;
 }
+
+export type ProductList = {
+}

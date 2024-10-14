@@ -19,7 +19,7 @@ export default function RenderComponents(props: RenderProps) {
       data-contenttype={contentTypeUid}
       data-locale={locale}
     >
-      {pageComponents?.map((component, key: number) => {
+      {/* {pageComponents?.map((component, key: number) => {
         if (component.hero_banner) {
           return blogPost ? (
             <BlogBanner
@@ -83,7 +83,7 @@ export default function RenderComponents(props: RenderProps) {
             />
           );
         }
-      })}
+      })} */}
     </div>
   );
 }

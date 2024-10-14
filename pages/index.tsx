@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { onEntryChange } from '../contentstack-sdk';
 import RenderComponents from '../components/render-components';
-import { getPageRes } from '../helper';
+import { getCategories, getProductList } from '../helper';
 import Skeleton from 'react-loading-skeleton';
 import { Props, Context } from "../typescript/pages";
+import { ProductList } from '../typescript/products';
+import ProductGrid from '../components/product-container';
 
-export default function Home(props: Props) {
-
-  const { page, entryUrl } = props;
-
-  const [getEntry, setEntry] = useState(page);
+export default function Home() {
+  const [entries, setEntries] = useState<ProductList>([] as ProductList);
 
   async function fetchData() {
     try {
-      const entryRes = await getPageRes(entryUrl);
+      const entryRes = await getProductList();
+      const res = await getCategories();
+      console.log(entryRes)
+      console.log(res)
       if (!entryRes) throw new Error('Status code 404');
-      setEntry(entryRes);
+      setEntries(entryRes);
     } catch (error) {
       console.error(error);
     }
@@ -25,13 +27,19 @@ export default function Home(props: Props) {
     onEntryChange(() => fetchData());
   }, []);
 
-  return getEntry ? (
-    <RenderComponents
-      pageComponents={getEntry.page_components}
-      contentTypeUid='page'
-      entryUid={getEntry.uid}
-      locale={getEntry.locale}
-    />
+  return entries ? (
+    // <RenderComponents
+    //   pageComponents={entries.}
+    //   contentTypeUid='products'
+    //   entryUid={entries.uid}
+    //   locale={entries.locale}
+    // />
+    <div>
+      {entries.map(products => {
+        return <ProductGrid key={products?.uid} products={products?.products?.data}/>
+        })
+      }
+    </div>
   ) : (
     <Skeleton count={3} height={300} />
   );
@@ -39,7 +47,7 @@ export default function Home(props: Props) {
 
 export async function getServerSideProps(context: Context) {
   try {
-    const entryRes = await getPageRes(context.resolvedUrl);
+    const entryRes = await getCategories();
     return {
       props: {
         entryUrl: context.resolvedUrl,
