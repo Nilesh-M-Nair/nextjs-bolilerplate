@@ -1,0 +1,123 @@
+name: 'Update Child Apps'
+on:
+  push:
+    branches: main
+jobs:
+  configurations:
+    runs-on: ubuntu-latest
+    outputs:
+      ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
+      ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
+      GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
+      #The User id used above should be the user of which the personal access token is created and used below in next job (updateChildApps job)
+      GithubUserEmailId: "nilesh.nair@afourtech.com"
+      #The above email id will be used when committing the updates to the child apps
+      GithubUserName: "NileshNairA4"
+      #The above name will be used when committing the updates to the child apps
+      BoilerplateRepoName: "nextjs-bolilerplate"
+    steps:
+      - uses: actions/github-script@v6
+        id: getConfigs
+        with:
+          script: |
+            const githubUserIdForCommits = 'nileshnaira4';
+            const appListMatrix = {
+              include: [{
+                appName: 'nextjs-app-1',
+                repoName: 'nextjs-app-1',
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
+              }
+            };
+            core.setOutput('ChildAppsList', appListMatrix);
+            core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app){
+              return allCommands = allCommands 
+              
+            }, ""));
+            core.setOutput('GithubUserId', githubUserIdForCommits);
+          result-encoding: string
+      # + app.devCiCdCommand + "\n" + app.stageCiCdCommand + "\n";
+      # - name: CICD Commands of All the Ecommerce Apps.
+      #   run: |
+      #     echo "Once all the jobs are completed, execute all the below commands in the #marketplace-app-deployment-notifications channel in slack for deploying all the apps to dev and stage"
+      #     echo "${{steps.getConfigs.outputs.ChildAppsCiCdCommands}}"
+
+  UpdatingChildApps:
+    runs-on: ubuntu-latest
+    needs: configurations
+    strategy:
+      matrix: ${{fromJson(needs.configurations.outputs.ChildAppsList)}}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Updating ${{matrix.appName}}
+        run: |
+          cd ..
+          git clone https://${{ needs.configurations.outputs.GithubUserId }}:${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          ls
+          cd ./${{ matrix.repoName }}/
+          git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
+          git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
+          git checkout -b staging refs/remotes/origin/staging
+          git checkout -b development refs/remotes/origin/development
+          git checkout -b feature/updates-from-boilerplate refs/remotes/origin/feature/updates-from-boilerplate
+          git pull origin
+          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
+          cp -rf ./boilerplate-overrides/* .
+          git add *
+          git commit -m"Updates taken from boilerplate"
+          git push
+          gh pr create -B development -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate
+          gh pr merge -m
+          git checkout development
+          gh pr create -B staging -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate
+          gh pr merge -m
+          git checkout staging
+          gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate
+          cd ..
+          rm -rf ${{ matrix.repoName }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          
+
+
+
+
+
+
+
+
+     
+  # updateChildApps:
+  #   strategy:
+  #     matrix:
+  #       appName: ["exampleApp", "abcd"]
+  #       include:
+  #         - repoLink: "link"
+  #           repoName: "name"
+  #           devCiCdCommand: "dev"
+  #           stageCiCdCommand: "stage"
+  #           appName: "exampleApp"
+          
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: echo ${{secrets.GH_PAT}}
+  #     - run: echo ${{matrix.appName}}
+  #     - run: echo ${{matrix.repoLink}}
+  #     - run: echo ${{matrix.repoName}}
+  #     - run: echo ${{matrix.devCiCdCommand}}
+  #     - run: echo ${{matrix.stageCiCdCommand}}
+
+
+
+
+
+
+      # https://${{GH_USERID}}:${{GH_PAT}}@
+
+      
+      # - uses: actions/checkout@v3
+      # - name: Use Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18.x'
+      # - run: node updateChildApps.js
+      #   env:
