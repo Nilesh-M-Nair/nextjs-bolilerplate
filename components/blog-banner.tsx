@@ -30,18 +30,13 @@ export default function BlogBanner({ blogBanner }: {blogBanner : BannerProps}) {
             {blogBanner.banner_title}
           </h1>
         )}
-
-        {blogBanner.banner_description && (
-          <p className='hero-description' {...blogBanner.$?.banner_description as {}}>
-            {blogBanner.banner_description}
-          </p>
-        )}
         {/* Duplicate block of code */}
-        {blogBanner.banner_description && (
-          <p className='hero-description' {...blogBanner.$?.banner_description as {}}>
-            {blogBanner.banner_description}
-          </p>
+        {blogBanner.banner_title && (
+          <h1 className='hero-title' {...blogBanner.$?.banner_title as {}}>
+            {blogBanner.banner_title}
+          </h1>
         )}
+
         {blogBanner.banner_description && (
           <p className='hero-description' {...blogBanner.$?.banner_description as {}}>
             {blogBanner.banner_description}
