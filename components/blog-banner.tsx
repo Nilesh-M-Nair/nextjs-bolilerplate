@@ -36,6 +36,12 @@ export default function BlogBanner({ blogBanner }: {blogBanner : BannerProps}) {
             {blogBanner.banner_description}
           </p>
         )}
+        {/* Duplicate block of code */}
+        {blogBanner.banner_description && (
+          <p className='hero-description' {...blogBanner.$?.banner_description as {}}>
+            {blogBanner.banner_description}
+          </p>
+        )}
       </div>
     </div>
   );
