@@ -26,20 +26,18 @@ jobs:
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
                 repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
-              }
+              }]
             };
             core.setOutput('ChildAppsList', appListMatrix);
             core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app){
-              return allCommands = allCommands 
-              
+              return allCommands = allCommands + app.devCiCdCommand + "\n" + app.stageCiCdCommand + "\n";
             }, ""));
             core.setOutput('GithubUserId', githubUserIdForCommits);
           result-encoding: string
-      # + app.devCiCdCommand + "\n" + app.stageCiCdCommand + "\n";
       # - name: CICD Commands of All the Ecommerce Apps.
-      #   run: |
-      #     echo "Once all the jobs are completed, execute all the below commands in the #marketplace-app-deployment-notifications channel in slack for deploying all the apps to dev and stage"
-      #     echo "${{steps.getConfigs.outputs.ChildAppsCiCdCommands}}"
+      #   # run: |
+      #   #   echo "Once all the jobs are completed, execute all the below commands in the #marketplace-app-deployment-notifications channel in slack for deploying all the apps to dev and stage"
+      #   #   echo "${{steps.getConfigs.outputs.ChildAppsCiCdCommands}}"
 
   UpdatingChildApps:
     runs-on: ubuntu-latest
