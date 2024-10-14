@@ -42,6 +42,11 @@ export default function BlogBanner({ blogBanner }: {blogBanner : BannerProps}) {
             {blogBanner.banner_description}
           </p>
         )}
+        {blogBanner.banner_description && (
+          <p className='hero-description' {...blogBanner.$?.banner_description as {}}>
+            {blogBanner.banner_description}
+          </p>
+        )}
       </div>
     </div>
   );
