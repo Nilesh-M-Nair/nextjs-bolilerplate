@@ -58,8 +58,11 @@ jobs:
           git checkout -b development refs/remotes/origin/development
           git checkout -b feature/updates-from-boilerplate refs/remotes/origin/feature/updates-from-boilerplate
           git pull origin
-          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
-          cp -rf ./boilerplate-overrides/* .
+          if [-d "boilerplate-overrides" ]; then
+            cp -rf ./boilerplate-overrides/* .
+          else
+            echo "boilerplate-overrides directory not found, skipping copy."
+          fi
           git add *
           git commit -m"Updates taken from boilerplate"
           git push
