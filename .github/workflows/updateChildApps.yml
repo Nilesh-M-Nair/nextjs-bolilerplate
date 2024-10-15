@@ -71,6 +71,13 @@ jobs:
       #       echo "boilerplate-overrides directory not found, skipping copy."
       #     fi
 
+      - name: List files for debugging
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Files in current directory:"
+          ls -la
+
       - name: Commit and push changes
         run: |
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
