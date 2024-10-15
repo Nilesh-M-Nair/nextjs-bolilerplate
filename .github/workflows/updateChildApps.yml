@@ -2,6 +2,7 @@ name: 'Update Child Apps'
 on:
   push:
     branches: main
+
 jobs:
   configurations:
     runs-on: ubuntu-latest
@@ -21,7 +22,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
+                repoLink: 'https://github.com/Nilesh-M-Nair/nextjs-app-1'
               }]
             };
             core.setOutput('ChildAppsList', appListMatrix);
@@ -45,9 +46,13 @@ jobs:
 
       - name: Create and switch to branches
         run: |
-          git checkout -b staging origin/staging || git checkout staging
-          git checkout -b development origin/development || git checkout development
-          git checkout -b feature/updates-from-boilerplate origin/feature/updates-from-boilerplate || git checkout feature/updates-from-boilerplate
+          for branch in staging development feature/updates-from-boilerplate; do
+            if git rev-parse --verify origin/$branch; then
+              git checkout $branch
+            else
+              git checkout -b $branch
+            fi
+          done
 
       - name: Apply boilerplate changes
         run: |
@@ -61,19 +66,17 @@ jobs:
       - name: Commit and push changes
         run: |
           git add .
-          git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
+          git diff --quiet || git commit -m "Updates taken from boilerplate"
           git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
 
       - name: Create and merge PRs
         run: |
-          gh pr create -B development -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to development already exists."
-          gh pr merge -m || echo "Failed to merge PR to development."
-          git checkout development
-          gh pr create -B staging -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to staging already exists."
-          gh pr merge -m || echo "Failed to merge PR to staging."
-          git checkout staging
-          gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to main already exists."
+          for target in development staging main; do
+            gh pr create -B $target -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to $target already exists."
+            gh pr merge -m || true
+            git checkout $target
+          done
           cd ..
           rm -rf ${{ matrix.repoName }}
 
