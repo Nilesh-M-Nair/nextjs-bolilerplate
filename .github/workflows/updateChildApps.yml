@@ -52,7 +52,9 @@ jobs:
           
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
-          
+          echo "Username: ${{ needs.configurations.outputs.GithubUserId }}"
+          echo "Current Directory Contents:"
+          ls -la
           git checkout -b staging refs/remotes/origin/staging
           git checkout -b development refs/remotes/origin/development
           git checkout -b feature/updates-from-boilerplate refs/remotes/origin/feature/updates-from-boilerplate
