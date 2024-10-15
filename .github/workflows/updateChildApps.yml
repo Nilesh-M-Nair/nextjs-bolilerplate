@@ -9,12 +9,9 @@ jobs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
       ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
-      #The User id used above should be the user of which the personal access token is created and used below in next job (updateChildApps job)
-      GithubUserEmailId: "nilesh.nair@afourtech.com"
-      #The above email id will be used when committing the updates to the child apps
-      GithubUserName: "NileshNairA4"
-      #The above name will be used when committing the updates to the child apps
-      BoilerplateRepoName: "nextjs-bolilerplate"
+      GithubUserEmailId: ${{ steps.getConfigs.outputs.GithubUserEmailId }}
+      GithubUserName: ${{ steps.getConfigs.outputs.GithubUserName }}
+      BoilerplateRepoName: ${{ steps.getConfigs.outputs.BoilerplateRepoName }}
     steps:
       - uses: actions/github-script@v6
         id: getConfigs
@@ -29,10 +26,13 @@ jobs:
               }]
             };
             core.setOutput('ChildAppsList', appListMatrix);
-            core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app){
-              return allCommands = allCommands;
+            core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app) {
+              return allCommands; // This logic needs to be defined based on your command requirements
             }, ""));
             core.setOutput('GithubUserId', githubUserIdForCommits);
+            core.setOutput('GithubUserEmailId', 'nilesh.nair@afourtech.com');
+            core.setOutput('GithubUserName', 'NileshNairA4');
+            core.setOutput('BoilerplateRepoName', 'nextjs-bolilerplate');
           result-encoding: string
 
   UpdatingChildApps:
@@ -53,14 +53,15 @@ jobs:
 
       - name: Create and switch to branches
         run: |
-            for branch in staging development feature/updates-from-boilerplate; do
-              if git rev-parse --verify origin/$branch; then
-                git checkout $branch
-              else
-                git checkout -b $branch
-              fi
-            done
+          for branch in staging development feature/updates-from-boilerplate; do
+            if git rev-parse --verify origin/$branch; then
+              git checkout $branch
+            else
+              git checkout -b $branch
+            fi
+          done
 
+      # Uncomment and define the boilerplate changes application as needed
       # - name: Apply boilerplate changes
       #   run: |
       #     cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
