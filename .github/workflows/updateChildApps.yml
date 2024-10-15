@@ -46,16 +46,20 @@ jobs:
       - name: Clone the repository
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          git clone https://${{ needs.configurations.outputs.GithubUserId }}:${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
       - name: Create and switch to branches
         run: |
-          git checkout -b staging origin/staging || git checkout staging
-          git checkout -b development origin/development || git checkout development
-          git checkout -b feature/updates-from-boilerplate origin/feature/updates-from-boilerplate || git checkout feature/updates-from-boilerplate
+            for branch in staging development feature/updates-from-boilerplate; do
+              if git rev-parse --verify origin/$branch; then
+                git checkout $branch
+              else
+                git checkout -b $branch
+              fi
+            done
 
       - name: Apply boilerplate changes
         run: |
@@ -85,4 +89,4 @@ jobs:
           cd ..
           rm -rf ${{ matrix.repoName }}
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_PAT }} run: |
