@@ -73,10 +73,13 @@ jobs:
 
       - name: Commit and push changes
         run: |
+          git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
+          git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
           git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
+      
 
       - name: Create and merge PRs
         run: |
