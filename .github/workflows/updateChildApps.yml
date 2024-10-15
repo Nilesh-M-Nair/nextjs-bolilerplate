@@ -2,15 +2,18 @@ name: 'Update Child Apps'
 on:
   push:
     branches: main
-
 jobs:
   configurations:
     runs-on: ubuntu-latest
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
+      ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
+      #The User id used above should be the user of which the personal access token is created and used below in next job (updateChildApps job)
       GithubUserEmailId: "nilesh.nair@afourtech.com"
+      #The above email id will be used when committing the updates to the child apps
       GithubUserName: "NileshNairA4"
+      #The above name will be used when committing the updates to the child apps
       BoilerplateRepoName: "nextjs-bolilerplate"
     steps:
       - uses: actions/github-script@v6
@@ -22,21 +25,24 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'https://github.com/Nilesh-M-Nair/nextjs-app-1'
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
               }]
             };
             core.setOutput('ChildAppsList', appListMatrix);
+            core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app){
+              return allCommands = allCommands;
+            }, ""));
             core.setOutput('GithubUserId', githubUserIdForCommits);
+          result-encoding: string
 
   UpdatingChildApps:
     runs-on: ubuntu-latest
     needs: configurations
     strategy:
-      matrix: ${{ fromJson(needs.configurations.outputs.ChildAppsList) }}
+      matrix: ${{fromJson(needs.configurations.outputs.ChildAppsList)}}
     steps:
       - uses: actions/checkout@v3
-
-      - name: Clone the repository
+      - name: Updating ${{matrix.appName}}
         run: |
           cd ..
           git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
@@ -79,6 +85,5 @@ jobs:
           done
           cd ..
           rm -rf ${{ matrix.repoName }}
-
-    env:
-      GH_TOKEN: ${{ secrets.GH_PAT }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
