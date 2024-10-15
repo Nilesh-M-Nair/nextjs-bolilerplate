@@ -30,8 +30,8 @@ jobs:
               return allCommands; // This logic needs to be defined based on your command requirements
             }, ""));
             core.setOutput('GithubUserId', githubUserIdForCommits);
-            core.setOutput('GithubUserEmailId', 'nilesh.nair@afourtech.com');
-            core.setOutput('GithubUserName', 'NileshNairA4');
+            core.setOutput('GithubUserEmailId', 'nilesh.m.nair@afourtech.com');
+            core.setOutput('GithubUserName', 'Nilesh-M-Nair');
             core.setOutput('BoilerplateRepoName', 'nextjs-bolilerplate');
           result-encoding: string
 
