@@ -61,14 +61,14 @@ jobs:
               fi
             done
 
-      - name: Apply boilerplate changes
-        run: |
-          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
-          if [ -d "boilerplate-overrides" ]; then
-            cp -rf ./boilerplate-overrides/* .
-          else
-            echo "boilerplate-overrides directory not found, skipping copy."
-          fi
+      # - name: Apply boilerplate changes
+      #   run: |
+      #     cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
+      #     if [ -d "boilerplate-overrides" ]; then
+      #       cp -rf ./boilerplate-overrides/* .
+      #     else
+      #       echo "boilerplate-overrides directory not found, skipping copy."
+      #     fi
 
       - name: Commit and push changes
         run: |
