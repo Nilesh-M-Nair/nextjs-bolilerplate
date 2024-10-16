@@ -2,6 +2,7 @@ name: 'Update Child Apps'
 on:
   push:
     branches: main
+
 jobs:
   configurations:
     runs-on: ubuntu-latest
@@ -24,7 +25,7 @@ jobs:
                 repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
               }]
             };
-            core.setOutput('ChildAppsList', appListMatrix);
+            core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
             core.setOutput('GithubUserId', githubUserIdForCommits);
 
   UpdatingChildApps:
@@ -68,10 +69,10 @@ jobs:
       - name: Create and merge PRs
         run: |
           gh pr create -B development -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to development already exists."
-          gh pr merge -m || echo "Failed to merge PR to development."
+          gh pr merge --admin --squash || echo "Failed to merge PR to development."
           git checkout development
           gh pr create -B staging -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to staging already exists."
-          gh pr merge -m || echo "Failed to merge PR to staging."
+          gh pr merge --admin --squash || echo "Failed to merge PR to staging."
           git checkout staging
           gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to main already exists."
           cd ..
