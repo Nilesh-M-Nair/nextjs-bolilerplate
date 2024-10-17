@@ -9,15 +9,15 @@ jobs:
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
-      GithubUserEmailId: "nilesh.nair@afourtech.com"
-      GithubUserName: "NileshNairA4"
+      GithubUserEmailId: "nilesh.m.nair@gmail.com "
+      GithubUserName: "Nilesh-M-Nair"
       BoilerplateRepoName: "nextjs-bolilerplate"
     steps:
       - uses: actions/github-script@v6
         id: getConfigs
         with:
           script: |
-            const githubUserIdForCommits = 'nileshnaira4';
+            const githubUserIdForCommits = 'nilesh-m-nair';
             const appListMatrix = {
               include: [{
                 appName: 'nextjs-app-1',
