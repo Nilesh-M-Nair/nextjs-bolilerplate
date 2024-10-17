@@ -18,6 +18,8 @@ type Article = {
   $: AdditionalParam;
 }
 
+// Added comments here
+
 type FeaturedBlog = {
   title: string;
   featured_image: Image;
