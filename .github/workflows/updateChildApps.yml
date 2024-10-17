@@ -2,16 +2,16 @@ name: 'Update Child Apps'
 on:
   push:
     branches: main
+
 jobs:
   configurations:
     runs-on: ubuntu-latest
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
-      ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
-      GithubUserEmailId: ${{ steps.getConfigs.outputs.GithubUserEmailId }}
-      GithubUserName: ${{ steps.getConfigs.outputs.GithubUserName }}
-      BoilerplateRepoName: ${{ steps.getConfigs.outputs.BoilerplateRepoName }}
+      GithubUserEmailId: "nilesh.nair@afourtech.com"
+      GithubUserName: "NileshNairA4"
+      BoilerplateRepoName: "nextjs-bolilerplate"
     steps:
       - uses: actions/github-script@v6
         id: getConfigs
@@ -25,15 +25,8 @@ jobs:
                 repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
               }]
             };
-            core.setOutput('ChildAppsList', appListMatrix);
-            core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app) {
-              return allCommands; // This logic needs to be defined based on your command requirements
-            }, ""));
+            core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
             core.setOutput('GithubUserId', githubUserIdForCommits);
-            core.setOutput('GithubUserEmailId', 'nilesh.m.nair@gmail.com');
-            core.setOutput('GithubUserName', 'Nilesh-M-Nair');
-            core.setOutput('BoilerplateRepoName', 'nextjs-bolilerplate');
-          result-encoding: string
 
   UpdatingChildApps:
     runs-on: ubuntu-latest
@@ -46,58 +39,44 @@ jobs:
       - name: Clone the repository
         run: |
           cd ..
-          git clone https://${{ needs.configurations.outputs.GithubUserId }}:${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
       - name: Create and switch to branches
         run: |
-          for branch in staging development feature/updates-from-boilerplate; do
-            if git rev-parse --verify origin/$branch; then
-              git checkout $branch
-            else
-              git checkout -b $branch
-            fi
-          done
+          git checkout -b staging origin/staging || git checkout staging
+          git checkout -b development origin/development || git checkout development
+          git checkout -b feature/updates-from-boilerplate origin/feature/updates-from-boilerplate || git checkout feature/updates-from-boilerplate
 
-      # Uncomment and define the boilerplate changes application as needed
-      # - name: Apply boilerplate changes
-      #   run: |
-      #     cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
-      #     if [ -d "boilerplate-overrides" ]; then
-      #       cp -rf ./boilerplate-overrides/* .
-      #     else
-      #       echo "boilerplate-overrides directory not found, skipping copy."
-      #     fi
-
-      - name: List files for debugging
+      - name: Apply boilerplate changes
         run: |
-          echo "Current directory:"
-          pwd
-          echo "Files in current directory:"
-          ls -la
+          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
+          if [ -d "boilerplate-overrides" ]; then
+            cp -rf ./boilerplate-overrides/* .
+          else
+            echo "boilerplate-overrides directory not found, skipping copy."
+          fi
 
       - name: Commit and push changes
         run: |
-          git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
-          git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
           git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
-      
 
       - name: Create and merge PRs
         run: |
           gh pr create -B development -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to development already exists."
-          gh pr merge -m || echo "Failed to merge PR to development."
+          gh pr merge --admin --squash || echo "Failed to merge PR to development."
           git checkout development
           gh pr create -B staging -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to staging already exists."
-          gh pr merge -m || echo "Failed to merge PR to staging."
+          gh pr merge --admin --squash || echo "Failed to merge PR to staging."
           git checkout staging
           gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to main already exists."
           cd ..
           rm -rf ${{ matrix.repoName }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT }}
