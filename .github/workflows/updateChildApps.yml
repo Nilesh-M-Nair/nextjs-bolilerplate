@@ -9,7 +9,7 @@ jobs:
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
-      GithubUserEmailId: "nilesh.m.nair@gmail.com "
+      GithubUserEmailId: "nilesh.m.nair@gmail.com"
       GithubUserName: "Nilesh-M-Nair"
       BoilerplateRepoName: "nextjs-bolilerplate"
     steps:
@@ -38,6 +38,9 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all branches and history
 
+      - name: Fetch all branches
+        run: git fetch --all
+
       - name: Clone the repository
         run: |
           cd ..
@@ -48,9 +51,31 @@ jobs:
 
       - name: Create and switch to branches
         run: |
-          git checkout -b staging origin/staging || git checkout staging
-          git checkout -b development origin/development || git checkout development
-          git checkout -b feature/updates-from-boilerplate origin/feature/updates-from-boilerplate || git checkout feature/updates-from-boilerplate
+          git fetch --all
+
+          # Check out or create a staging branch
+          if git show-ref --quiet refs/remotes/origin/staging; then
+            git checkout staging
+          else
+            git checkout -b staging origin/main
+            git push origin staging
+          fi
+
+          # Check out or create a development branch
+          if git show-ref --quiet refs/remotes/origin/development; then
+            git checkout development
+          else
+            git checkout -b development origin/main
+            git push origin development
+          fi
+
+          # Check out or create a feature branch
+          if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
+            git checkout feature/updates-from-boilerplate
+          else
+            git checkout -b feature/updates-from-boilerplate origin/main
+            git push origin feature/updates-from-boilerplate
+          fi
 
       - name: Apply boilerplate changes
         run: |
