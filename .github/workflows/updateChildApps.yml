@@ -41,10 +41,15 @@ jobs:
       - name: Clone the child repository
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}  # Cloning child repo, like nextjs-app-1
-          cd ./${{ matrix.repoName }}/  # Switch into the child repository's directory
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
+
+      - name: Set Git author identity
+        run: |
+          git config --local user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
+          git config --local user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
       - name: Create and switch to branches in the child repo
         run: |
@@ -83,7 +88,6 @@ jobs:
             echo "boilerplate-overrides directory not found, skipping copy."
           fi
 
-
       - name: Commit and push changes to the child repo
         run: |
           git add .
@@ -101,7 +105,7 @@ jobs:
           git checkout staging
           gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to main already exists."
           cd ..
-          rm -rf ${{ matrix.repoName }}  # Clean up the cloned child repo
+          rm -rf ${{ matrix.repoName }}
 
     env:
       GH_TOKEN: ${{ secrets.GH_PAT }}
