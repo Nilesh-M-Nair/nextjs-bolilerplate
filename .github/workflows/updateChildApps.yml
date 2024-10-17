@@ -38,22 +38,19 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all branches and history
 
-      - name: Fetch all branches
-        run: git fetch --all
-
-      - name: Clone the repository
+      - name: Clone the child repository
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
-          cd ./${{ matrix.repoName }}/
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}  # Cloning child repo, like nextjs-app-1
+          cd ./${{ matrix.repoName }}/  # Switch into the child repository's directory
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
-      - name: Create and switch to branches
+      - name: Create and switch to branches in the child repo
         run: |
           git fetch --all
 
-          # Check out or create a staging branch
+          # Check out or create staging branch in the child repo
           if git show-ref --quiet refs/remotes/origin/staging; then
             git checkout staging
           else
@@ -61,7 +58,7 @@ jobs:
             git push origin staging
           fi
 
-          # Check out or create a development branch
+          # Check out or create development branch in the child repo
           if git show-ref --quiet refs/remotes/origin/development; then
             git checkout development
           else
@@ -69,7 +66,7 @@ jobs:
             git push origin development
           fi
 
-          # Check out or create a feature branch
+          # Check out or create feature branch in the child repo
           if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
             git checkout feature/updates-from-boilerplate
           else
@@ -77,23 +74,23 @@ jobs:
             git push origin feature/updates-from-boilerplate
           fi
 
-      - name: Apply boilerplate changes
+      - name: Apply boilerplate changes to the child repo
         run: |
-          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
+          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .  # Apply changes from parent repo to child repo
           if [ -d "boilerplate-overrides" ]; then
             cp -rf ./boilerplate-overrides/* .
           else
             echo "boilerplate-overrides directory not found, skipping copy."
           fi
 
-      - name: Commit and push changes
+      - name: Commit and push changes to the child repo
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
           git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
 
-      - name: Create and merge PRs
+      - name: Create and merge PRs for the child repo
         run: |
           gh pr create -B development -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to development already exists."
           gh pr merge --admin --squash || echo "Failed to merge PR to development."
@@ -103,7 +100,7 @@ jobs:
           git checkout staging
           gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to main already exists."
           cd ..
-          rm -rf ${{ matrix.repoName }}
+          rm -rf ${{ matrix.repoName }}  # Clean up the cloned child repo
 
     env:
       GH_TOKEN: ${{ secrets.GH_PAT }}
