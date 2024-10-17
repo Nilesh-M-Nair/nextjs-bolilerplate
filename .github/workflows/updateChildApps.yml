@@ -50,6 +50,11 @@ jobs:
           git checkout -b development origin/development || git checkout development
           git checkout -b feature/updates-from-boilerplate origin/feature/updates-from-boilerplate || git checkout feature/updates-from-boilerplate
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh -y
+      
       - name: Apply boilerplate changes
         run: |
           cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .
