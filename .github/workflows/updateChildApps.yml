@@ -74,14 +74,20 @@ jobs:
             git push origin feature/updates-from-boilerplate
           fi
 
-      - name: Apply boilerplate changes to the child repo
-        run: |
-          cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/* .  # Apply changes from parent repo to child repo
-          if [ -d "boilerplate-overrides" ]; then
-            cp -rf ./boilerplate-overrides/* .
-          else
-            echo "boilerplate-overrides directory not found, skipping copy."
-          fi
+          - name: Apply boilerplate changes to the child repo
+            run: |
+              cd ../${{ needs.configurations.outputs.BoilerplateRepoName }}
+              git diff --name-only HEAD > ../changed_files.txt
+              cd -
+              cat ../changed_files.txt | while read file; do
+                cp -rf ../${{ needs.configurations.outputs.BoilerplateRepoName }}/$file . || true
+              done
+              if [ -d "boilerplate-overrides" ]; then
+                cp -rf boilerplate-overrides/* .
+              else
+                echo "boilerplate-overrides directory not found, skipping copy."
+              fi
+
 
       - name: Commit and push changes to the child repo
         run: |
