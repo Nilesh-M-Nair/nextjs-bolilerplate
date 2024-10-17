@@ -22,7 +22,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
+                repoLink: 'git@github.com:Nilesh-M-Nair/nextjs-app-1.git'  # Use SSH link
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
@@ -38,23 +38,24 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all branches and history
 
-      - name: Clone the child repository
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Clone the child repository using SSH
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          git clone git@github.com:Nilesh-M-Nair/${{ matrix.repoName }}.git
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
-      - name: Set Git author identity
-        run: |
-          git config --local user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
-          git config --local user.name "${{ needs.configurations.outputs.GithubUserName }}"
-
       - name: Create and switch to branches in the child repo
         run: |
           git fetch --all
-
           # Check out or create staging branch in the child repo
           if git show-ref --quiet refs/remotes/origin/staging; then
             git checkout staging
@@ -62,7 +63,6 @@ jobs:
             git checkout -b staging origin/main
             git push origin staging
           fi
-
           # Check out or create development branch in the child repo
           if git show-ref --quiet refs/remotes/origin/development; then
             git checkout development
@@ -70,14 +70,12 @@ jobs:
             git checkout -b development origin/main
             git push origin development
           fi
-
           # Check out or create feature branch in the child repo
           if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
             git checkout feature/updates-from-boilerplate
           else
             git checkout -b feature/updates-from-boilerplate origin/main
             git push origin feature/updates-from-boilerplate
-          fi
 
       - name: Apply boilerplate changes to the child repo
         run: |
@@ -92,7 +90,6 @@ jobs:
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
-          git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
 
       - name: Create and merge PRs for the child repo
