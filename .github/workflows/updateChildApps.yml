@@ -22,7 +22,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'git@github.com:Nilesh-M-Nair/nextjs-app-1.git'
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
@@ -36,44 +36,48 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all branches and history
 
-      - name: Set up SSH key for parent repo
+      - name: Clone the child repository
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          cd ..
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          cd ./${{ matrix.repoName }}/
+          git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
+          git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
-      - name: Clone the child repository using SSH
+      - name: Set Git author identity
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_CHILD }}" > ~/.ssh/id_rsa_child
-          chmod 600 ~/.ssh/id_rsa_child
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          GIT_SSH_COMMAND='ssh -i ~/.ssh/id_rsa_child' git clone git@github.com:Nilesh-M-Nair/${{ matrix.repoName }}.git
+          git config --local user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
+          git config --local user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
       - name: Create and switch to branches in the child repo
         run: |
-          cd ./${{ matrix.repoName }}
           git fetch --all
+
+          # Check out or create staging branch in the child repo
           if git show-ref --quiet refs/remotes/origin/staging; then
             git checkout staging
           else
             git checkout -b staging origin/main
             git push origin staging
           fi
+
+          # Check out or create development branch in the child repo
           if git show-ref --quiet refs/remotes/origin/development; then
             git checkout development
           else
             git checkout -b development origin/main
             git push origin development
           fi
+
+          # Check out or create feature branch in the child repo
           if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
             git checkout feature/updates-from-boilerplate
           else
             git checkout -b feature/updates-from-boilerplate origin/main
             git push origin feature/updates-from-boilerplate
+          fi
 
       - name: Apply boilerplate changes to the child repo
         run: |
@@ -88,6 +92,7 @@ jobs:
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
+          git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
 
       - name: Create and merge PRs for the child repo
