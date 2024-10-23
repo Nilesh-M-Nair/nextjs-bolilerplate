@@ -22,7 +22,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1.git'  // Removed 'https://'
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1.git'  # Ensure the correct repo link is used
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
@@ -42,7 +42,7 @@ jobs:
       - name: Clone the child repository ${{ matrix.appName }}
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}  # The URL will be constructed correctly now
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}  # Correct repo link here
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
@@ -60,7 +60,7 @@ jobs:
             git switch feature/updates-from-boilerplate
           else
             git switch -c feature/updates-from-boilerplate origin/main
-            git push origin feature/updates-from-boilerplate
+            git push --set-upstream origin feature/updates-from-boilerplate  # Set upstream for the new branch
           fi
 
       - name: Apply boilerplate changes to the child repo
@@ -76,7 +76,6 @@ jobs:
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
-          git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
 
       - name: Create PR from feature to development
