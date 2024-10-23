@@ -22,7 +22,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'https://github.com/Nilesh-M-Nair/nextjs-app-1.git'  // Added missing comma here
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1.git'  // Removed 'https://'
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
@@ -42,7 +42,7 @@ jobs:
       - name: Clone the child repository ${{ matrix.appName }}
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}  # The URL will be constructed correctly now
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
