@@ -23,7 +23,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1',
                 # devCiCdCommand: '/marketplace-childapp -b development -a marketplace --ignore-npmrc',
                 # stageCiCdCommand: '/marketplace-childapp -b staging -a marketplace --ignore-npmrc'
               }]
