@@ -9,7 +9,6 @@ jobs:
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
-      # ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
       GithubUserEmailId: "nilesh.m.nair@gmail.com"
       GithubUserName: "Nilesh-M-Nair"
       BoilerplateRepoName: "nextjs-bolilerplate"
@@ -23,22 +22,12 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1',
-                # devCiCdCommand: '/marketplace-childapp -b development -a marketplace --ignore-npmrc',
-                # stageCiCdCommand: '/marketplace-childapp -b staging -a marketplace --ignore-npmrc'
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'  // Missing commas added here
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
-            # core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce((allCommands, app) => {
-            #   return allCommands + app.devCiCdCommand + "\n" + app.stageCiCdCommand + "\n";
-            # }, ""));
             core.setOutput('GithubUserId', githubUserIdForCommits);
           result-encoding: string
-
-      # - name: CICD Commands of All the Child Apps
-      #   run: |
-      #     echo "Once all the jobs are completed, execute the following commands for deploying apps to dev and stage:"
-      #     echo "${{steps.getConfigs.outputs.ChildAppsCiCdCommands}}"
 
   UpdatingChildApps:
     runs-on: ubuntu-latest
@@ -113,15 +102,3 @@ jobs:
       - name: Deploy from staging branch
         run: |
           echo "Deploying from staging branch"
-          echo "${{ matrix.stageCiCdCommand }}"
-
-      # - name: Notify Slack on Failure
-      #   if: failure()
-      #   uses: slackapi/slack-github-action@v1.23.0
-      #   with:
-      #     payload: |
-      #       {
-      #         "text": "❌ GitHub Actions Workflow *Update Child Apps* has failed for repository `${{ matrix.repoName }}`."
-      #       }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
