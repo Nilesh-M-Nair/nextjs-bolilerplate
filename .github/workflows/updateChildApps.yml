@@ -83,9 +83,12 @@ jobs:
       - name: Create PR from feature to development
         id: pr_feature_to_dev
         run: |
-          # Capture the PR number when creating the PR
-          pr_number=$(gh pr create -B development -H feature/updates-from-boilerplate -t "Merge feature into development" -b "Auto PR to merge feature into development" --repo "${{ matrix.repoLink }}" --json number --jq '.number')
-          echo "Pull request number: $pr_number"
+          # Create the PR and capture the URL
+          pr_url=$(gh pr create -B development -H feature/updates-from-boilerplate -t "Merge feature into development" -b "Auto PR to merge feature into development" --repo "${{ matrix.repoLink }}" | tee)
+          echo "Pull request URL: $pr_url"
+          # Extract the PR number from the URL
+          pr_number=$(echo "$pr_url" | sed -n 's#.*/pull/\([0-9]*\).*#\1#p')
+          echo "Extracted PR number: $pr_number"
           echo "::set-output name=PR_NUMBER::$pr_number"
 
       - name: Merge PR from feature to development
@@ -96,9 +99,12 @@ jobs:
       - name: Create PR from development to staging
         id: pr_dev_to_stage
         run: |
-          # Capture the PR number when creating the PR
-          pr_number=$(gh pr create -B staging -H development -t "Merge development into staging" -b "Auto PR to merge development into staging" --repo "${{ matrix.repoLink }}" --json number --jq '.number')
-          echo "Pull request number: $pr_number"
+          # Create the PR and capture the URL
+          pr_url=$(gh pr create -B staging -H development -t "Merge development into staging" -b "Auto PR to merge development into staging" --repo "${{ matrix.repoLink }}" | tee)
+          echo "Pull request URL: $pr_url"
+          # Extract the PR number from the URL
+          pr_number=$(echo "$pr_url" | sed -n 's#.*/pull/\([0-9]*\).*#\1#p')
+          echo "Extracted PR number: $pr_number"
           echo "::set-output name=PR_NUMBER::$pr_number"
 
       - name: Merge PR from development to staging
