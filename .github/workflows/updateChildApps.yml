@@ -89,11 +89,23 @@ jobs:
           # Extract the PR number from the URL
           pr_number=$(echo "$pr_url" | sed -n 's#.*/pull/\([0-9]*\).*#\1#p')
           echo "Extracted PR number: $pr_number"
+          if [ -z "$pr_number" ]; then
+            echo "Error: PR number could not be extracted. Exiting."
+            exit 1
+          fi
           echo "::set-output name=PR_NUMBER::$pr_number"
+
+      - name: Debugging - Show PR number
+        run: |
+          echo "Captured PR number: ${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }}"
 
       - name: Merge PR from feature to development
         run: |
           # Use the captured PR number to merge
+          if [ -z "${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }}" ]; then
+            echo "Error: PR number is missing. Exiting."
+            exit 1
+          fi
           gh pr merge ${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }} --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${{ matrix.repoName }}"; exit 1; }
 
       - name: Create PR from development to staging
@@ -105,11 +117,19 @@ jobs:
           # Extract the PR number from the URL
           pr_number=$(echo "$pr_url" | sed -n 's#.*/pull/\([0-9]*\).*#\1#p')
           echo "Extracted PR number: $pr_number"
+          if [ -z "$pr_number" ]; then
+            echo "Error: PR number could not be extracted. Exiting."
+            exit 1
+          fi
           echo "::set-output name=PR_NUMBER::$pr_number"
 
       - name: Merge PR from development to staging
         run: |
           # Use the captured PR number to merge
+          if [ -z "${{ steps.pr_dev_to_stage.outputs.PR_NUMBER }}" ]; then
+            echo "Error: PR number is missing. Exiting."
+            exit 1
+          fi
           gh pr merge ${{ steps.pr_dev_to_stage.outputs.PR_NUMBER }} --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${{ matrix.repoName }}"; exit 1; }
 
       - name: Deploy from staging branch
