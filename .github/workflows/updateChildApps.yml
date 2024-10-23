@@ -83,20 +83,24 @@ jobs:
       - name: Create PR from feature to development
         id: pr_feature_to_dev
         run: |
-          gh pr create -B development -H feature/updates-from-boilerplate -t "Merge feature into development" -b "Auto PR to merge feature into development" --repo "${{ matrix.repoLink }}" || echo "PR to development already exists."
+          pr_number=$(gh pr create -B development -H feature/updates-from-boilerplate -t "Merge feature into development" -b "Auto PR to merge feature into development" --repo "${{ matrix.repoLink }}" --json number --jq '.number') || echo "PR to development already exists."
+          echo "Pull request number: $pr_number"
+          echo "::set-output name=PR_NUMBER::$pr_number"
 
       - name: Merge PR from feature to development
         run: |
-          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${{ matrix.repoName }}"; exit 1; }
+          gh pr merge ${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }} --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${{ matrix.repoName }}"; exit 1; }
 
       - name: Create PR from development to staging
         id: pr_dev_to_stage
         run: |
-          gh pr create -B staging -H development -t "Merge development into staging" -b "Auto PR to merge development into staging" --repo "${{ matrix.repoLink }}" || echo "PR to staging already exists."
+          pr_number=$(gh pr create -B staging -H development -t "Merge development into staging" -b "Auto PR to merge development into staging" --repo "${{ matrix.repoLink }}" --json number --jq '.number') || echo "PR to staging already exists."
+          echo "Pull request number: $pr_number"
+          echo "::set-output name=PR_NUMBER::$pr_number"
 
       - name: Merge PR from development to staging
         run: |
-          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${{ matrix.repoName }}"; exit 1; }
+          gh pr merge ${{ steps.pr_dev_to_stage.outputs.PR_NUMBER }} --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${{ matrix.repoName }}"; exit 1; }
 
       - name: Deploy from staging branch
         run: |
