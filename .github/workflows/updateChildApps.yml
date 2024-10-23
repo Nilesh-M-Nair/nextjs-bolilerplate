@@ -34,6 +34,8 @@ jobs:
     needs: configurations
     strategy:
       matrix: ${{ fromJson(needs.configurations.outputs.ChildAppsList) }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Pass the GitHub token for CLI authentication
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,7 +44,7 @@ jobs:
       - name: Clone the child repository ${{ matrix.appName }}
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}  # Correct repo link here
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
@@ -85,9 +87,8 @@ jobs:
 
       - name: Merge PR from feature to development
         run: |
-          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${matrix.repoName}"; exit 1; }
+          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${{ matrix.repoName }}"; exit 1; }
         if: success()
-
       - name: Create PR from development to staging
         id: pr_dev_to_stage
         run: |
@@ -95,9 +96,8 @@ jobs:
 
       - name: Merge PR from development to staging
         run: |
-          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${matrix.repoName}"; exit 1; }
+          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${{ matrix.repoName }}"; exit 1; }
         if: success()
-
       - name: Deploy from staging branch
         run: |
           echo "Deploying from staging branch"
