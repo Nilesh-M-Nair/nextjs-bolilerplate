@@ -88,7 +88,7 @@ jobs:
       - name: Merge PR from feature to development
         run: |
           gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${{ matrix.repoName }}"; exit 1; }
-        if: success()
+
       - name: Create PR from development to staging
         id: pr_dev_to_stage
         run: |
@@ -97,7 +97,7 @@ jobs:
       - name: Merge PR from development to staging
         run: |
           gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${{ matrix.repoName }}"; exit 1; }
-        if: success()
+
       - name: Deploy from staging branch
         run: |
           echo "Deploying from staging branch"
