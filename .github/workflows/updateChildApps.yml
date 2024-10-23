@@ -1,7 +1,7 @@
 name: 'Update Child Apps'
 on:
   push:
-    branches: main
+    branches: main  # Trigger when parent repo's main branch is pushed
 
 jobs:
   configurations:
@@ -9,6 +9,7 @@ jobs:
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
       GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
+      # ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
       GithubUserEmailId: "nilesh.m.nair@gmail.com"
       GithubUserName: "Nilesh-M-Nair"
       BoilerplateRepoName: "nextjs-bolilerplate"
@@ -23,10 +24,21 @@ jobs:
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
                 repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1'
+                # devCiCdCommand: '/marketplace-childapp -b development -a marketplace --ignore-npmrc',
+                # stageCiCdCommand: '/marketplace-childapp -b staging -a marketplace --ignore-npmrc'
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
+            # core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce((allCommands, app) => {
+            #   return allCommands + app.devCiCdCommand + "\n" + app.stageCiCdCommand + "\n";
+            # }, ""));
             core.setOutput('GithubUserId', githubUserIdForCommits);
+          result-encoding: string
+
+      # - name: CICD Commands of All the Child Apps
+      #   run: |
+      #     echo "Once all the jobs are completed, execute the following commands for deploying apps to dev and stage:"
+      #     echo "${{steps.getConfigs.outputs.ChildAppsCiCdCommands}}"
 
   UpdatingChildApps:
     runs-on: ubuntu-latest
@@ -38,7 +50,7 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all branches and history
 
-      - name: Clone the child repository
+      - name: Clone the child repository ${{ matrix.appName }}
         run: |
           cd ..
           git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }}
@@ -51,61 +63,65 @@ jobs:
           git config --local user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config --local user.name "${{ needs.configurations.outputs.GithubUserName }}"
 
-      - name: Create and switch to branches in the child repo
+      - name: Create and switch to feature branch in the child repo
         run: |
           git fetch --all
-
-          # Check out or create staging branch in the child repo
-          if git show-ref --quiet refs/remotes/origin/staging; then
-            git checkout staging
-          else
-            git checkout -b staging origin/main
-            git push origin staging
-          fi
-
-          # Check out or create development branch in the child repo
-          if git show-ref --quiet refs/remotes/origin/development; then
-            git checkout development
-          else
-            git checkout -b development origin/main
-            git push origin development
-          fi
-
-          # Check out or create feature branch in the child repo
+          # Check or create feature branch
           if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
-            git checkout feature/updates-from-boilerplate
+            git switch feature/updates-from-boilerplate
           else
-            git checkout -b feature/updates-from-boilerplate origin/main
+            git switch -c feature/updates-from-boilerplate origin/main
             git push origin feature/updates-from-boilerplate
           fi
 
       - name: Apply boilerplate changes to the child repo
         run: |
-          rsync -av --exclude='.git' ../${{ needs.configurations.outputs.BoilerplateRepoName }}/ .  # Sync changes from boilerplate to child repo
+          rsync -av --exclude='.git' ../${{ needs.configurations.outputs.BoilerplateRepoName }}/ .
           if [ -d "boilerplate-overrides" ]; then
             rsync -av boilerplate-overrides/ .
           else
             echo "boilerplate-overrides directory not found, skipping copy."
           fi
 
-      - name: Commit and push changes to the child repo
+      - name: Commit and push changes to the feature branch
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
-          git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git
+          git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/${{ matrix.repoName }}.git
           git push origin feature/updates-from-boilerplate
 
-      - name: Create and merge PRs for the child repo
+      - name: Create PR from feature to development
+        id: pr_feature_to_dev
         run: |
-          gh pr create -B development -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to development already exists."
-          gh pr merge --admin --squash || echo "Failed to merge PR to development."
-          git checkout development
-          gh pr create -B staging -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to staging already exists."
-          gh pr merge --admin --squash || echo "Failed to merge PR to staging."
-          git checkout staging
-          gh pr create -B main -t UpdatesFromBoilerPlate -b UpdatesFromBoilerPlate || echo "PR to main already exists."
-          cd ..
-          rm -rf ${{ matrix.repoName }}
+          gh pr create -B development -H feature/updates-from-boilerplate -t "Merge feature into development" -b "Auto PR to merge feature into development" --repo "${{ matrix.repoLink }}" || echo "PR to development already exists."
 
-    env:
-      GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Merge PR from feature to development
+        run: |
+          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${matrix.repoName}"; exit 1; }
+        if: success()
+
+      - name: Create PR from development to staging
+        id: pr_dev_to_stage
+        run: |
+          gh pr create -B staging -H development -t "Merge development into staging" -b "Auto PR to merge development into staging" --repo "${{ matrix.repoLink }}" || echo "PR to staging already exists."
+
+      - name: Merge PR from development to staging
+        run: |
+          gh pr merge --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${matrix.repoName}"; exit 1; }
+        if: success()
+
+      - name: Deploy from staging branch
+        run: |
+          echo "Deploying from staging branch"
+          echo "${{ matrix.stageCiCdCommand }}"
+
+      # - name: Notify Slack on Failure
+      #   if: failure()
+      #   uses: slackapi/slack-github-action@v1.23.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "❌ GitHub Actions Workflow *Update Child Apps* has failed for repository `${{ matrix.repoName }}`."
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
