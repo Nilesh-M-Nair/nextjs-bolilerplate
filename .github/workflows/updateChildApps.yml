@@ -22,7 +22,7 @@ jobs:
               include: [{
                 appName: 'nextjs-app-1',
                 repoName: 'nextjs-app-1',
-                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1.git'  # Ensure the correct repo link is used
+                repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1.git'
               }]
             };
             core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
