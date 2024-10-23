@@ -44,7 +44,7 @@ jobs:
       - name: Clone the child repository ${{ matrix.appName }}
         run: |
           cd ..
-          git clone https://${{ secrets.GH_PAT }}@github.com/${{ matrix.repoLink }}.git
+          git clone https://${{ secrets.GH_PAT }}@github.com/${{ matrix.repoLink }}.git || { echo "Failed to clone repository: ${{ matrix.repoLink }}"; exit 1; }
           cd ./${{ matrix.repoName }}/
           git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
           git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
@@ -57,19 +57,18 @@ jobs:
       - name: Create and switch to feature branch in the child repo
         run: |
           git fetch --all
-          # Check or create feature branch
           if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
             git switch feature/updates-from-boilerplate
           else
             git switch -c feature/updates-from-boilerplate origin/main
-            git push --set-upstream origin feature/updates-from-boilerplate  # Set upstream for the new branch
+            git push --set-upstream origin feature/updates-from-boilerplate || { echo "Failed to push new feature branch"; exit 1; }
           fi
 
       - name: Apply boilerplate changes to the child repo
         run: |
-          rsync -av --exclude='.git' ../${{ needs.configurations.outputs.BoilerplateRepoName }}/ .
+          rsync -av --exclude='.git' ../${{ needs.configurations.outputs.BoilerplateRepoName }}/ . || { echo "Rsync of boilerplate failed"; exit 1; }
           if [ -d "boilerplate-overrides" ]; then
-            rsync -av boilerplate-overrides/ .
+            rsync -av boilerplate-overrides/ . || { echo "Rsync of boilerplate-overrides failed"; exit 1; }
           else
             echo "boilerplate-overrides directory not found, skipping copy."
           fi
@@ -78,7 +77,7 @@ jobs:
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
-          git push origin feature/updates-from-boilerplate
+          git push origin feature/updates-from-boilerplate || { echo "Failed to push changes to feature branch"; exit 1; }
 
       - name: Create PR from feature to development
         id: pr_feature_to_dev
