@@ -19,19 +19,19 @@ jobs:
 
       - name: Update Child Repos
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # Use GH_PAT instead of GITHUB_TOKEN
+          GH_PAT: ${{ secrets.GH_PAT }}  # Use GH_PAT for authentication
         run: |
           # List of child repos
-          CHILD_REPOS=("nextjs-app-1" "nextjs-app-2") # Update with your child repo names
+          CHILD_REPOS=("nextjs-app-1" "nextjs-app-2")  # Replace with actual child repo names
 
           for repo in "${CHILD_REPOS[@]}"
           do
             echo "Processing $repo..."
-            
-            # Clone the child repo
-            git clone https://Nilesh-M-Nair:${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${repo}.git
+
+            # Clone the child repo using GH_PAT for authentication
+            git clone https://$GH_PAT@github.com/Nilesh-M-Nair/${repo}.git
             cd ${repo}
-            
+
             # Checkout development branch and create feature branch
             git checkout development
             git checkout -b feature/changes-from-boilerplate
@@ -46,9 +46,9 @@ jobs:
               cd ..
               continue
             fi
-            
-            # Push the new feature branch
-            git push origin feature/changes-from-boilerplate
+
+            # Push the new feature branch using GH_PAT for authentication
+            git push https://$GH_PAT@github.com/Nilesh-M-Nair/${repo}.git feature/changes-from-boilerplate
 
             # Create and merge PR to development branch
             if gh pr create --title "Sync with Parent Repo" --body "Automated sync from parent repo" --base development --head feature/changes-from-boilerplate; then
@@ -73,8 +73,8 @@ jobs:
               echo "Failed to create PR to main branch in $repo."
             fi
 
-            # Clean up feature branch after PR merges
-            git push origin --delete feature/changes-from-boilerplate || echo "Failed to delete feature branch in $repo."
+            # Clean up feature branch after PR merges using GH_PAT for authentication
+            git push https://$GH_PAT@github.com/Nilesh-M-Nair/${repo}.git --delete feature/changes-from-boilerplate || echo "Failed to delete feature branch in $repo."
 
             # Return to root directory for next repo
             cd ..
