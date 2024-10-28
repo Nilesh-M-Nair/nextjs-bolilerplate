@@ -29,9 +29,9 @@ jobs:
             echo "Processing $repo..."
             
             # Clone the child repo
-            git clone https://github.com/Nilesh-M-Nair/${repo}.git
+            git clone https://Nilesh-M-Nair:${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${repo}.git
             cd ${repo}
-
+            
             # Checkout development branch and create feature branch
             git checkout development
             git checkout -b feature/changes-from-boilerplate
