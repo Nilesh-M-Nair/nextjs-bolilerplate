@@ -27,6 +27,7 @@ jobs:
           for repo in "${CHILD_REPOS[@]}"
           do
             echo "Processing $repo..."
+            echo ${{ secrets.GH_PAT }}
 
             # Clone the child repo using GH_PAT for authentication
             git clone https://$GH_PAT@github.com/Nilesh-M-Nair/${repo}.git
