@@ -19,6 +19,10 @@ jobs:
           git clone https://$GH_PAT@github.com/Nilesh-M-Nair/nextjs-app-1.git
           cd nextjs-app-1
 
+          # Set Git user identity
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           # Create a test file to confirm write access
           echo "This is a test file created by the PAT." > test-file.txt
           git add test-file.txt
