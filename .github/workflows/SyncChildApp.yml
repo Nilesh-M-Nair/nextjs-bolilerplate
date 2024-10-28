@@ -19,7 +19,7 @@ jobs:
 
       - name: Update Child Repos
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GH_PAT instead of GITHUB_TOKEN
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # Use GH_PAT instead of GITHUB_TOKEN
         run: |
           # List of child repos
           CHILD_REPOS=("nextjs-app-1" "nextjs-app-2") # Update with your child repo names
@@ -29,9 +29,9 @@ jobs:
             echo "Processing $repo..."
             
             # Clone the child repo
-            git clone https://Nilesh-M-Nair:${{ secrets.GITHUB_TOKEN }}@github.com/Nilesh-M-Nair/${repo}.git
+            git clone https://Nilesh-M-Nair:${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${repo}.git
             cd ${repo}
-
+            
             # Checkout development branch and create feature branch
             git checkout development
             git checkout -b feature/changes-from-boilerplate
