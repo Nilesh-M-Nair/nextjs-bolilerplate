@@ -37,7 +37,7 @@ jobs:
             git checkout -b feature/changes-from-boilerplate
 
             # Merge changes from Parent repo's main branch, handling conflicts if needed
-            if ! git merge --no-ff --strategy-option theirs <parent-repo-url>/main; then
+            if ! git merge --no-ff --strategy-option theirs https://github.com/Nilesh-M-Nair/nextjs-bolilerplate/main; then
               echo "Conflict encountered in $repo. Skipping this repo."
               cd ..
               continue
