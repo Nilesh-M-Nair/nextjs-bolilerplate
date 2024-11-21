@@ -23,17 +23,17 @@ jobs:
             const appListMatrix = {
               include: [{
                 appName: 'nextjs-app-1',
-                repoName: 'marketplace-nextjs-app-1',
-                repoLink: '@github.com/Nilesh-M-Nair/marketplace-nextjs-app-1.git',
-                devCiCdCommand: '/markteplace-app-automation -b development -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc',
-                stageCiCdCommand: '/markteplace-app-automation -b staging -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc'
+                repoName: 'nextjs-app-1',
+                repoLink: '@github.com/Nilesh-M-Nair/nextjs-app-1.git',
+                devCiCdCommand: '/markteplace-app-automation -b development -a new-app -o Nilesh-M-Nair -ignore-npmrc',
+                stageCiCdCommand: '/markteplace-app-automation -b staging -a new-app -o Nilesh-M-Nair -ignore-npmrc'
               },
               {
                 appName: 'anothernextjs-app-2',
-                repoName: 'marketplace-anothernextjs-app-2',
-                repoLink: '@github.com/Nilesh-M-Nair/marketplace-anothernextjs-app-2.git',
-                devCiCdCommand: '/markteplace-app-automation -b development -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc',
-                stageCiCdCommand: '/markteplace-app-automation -b staging -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc'
+                repoName: 'anothernextjs-app-2',
+                repoLink: '@github.com/Nilesh-M-Nair/anothernextjs-app-2.git',
+                devCiCdCommand: '/markteplace-app-automation -b development -a new-app -o Nilesh-M-Nair -ignore-npmrc',
+                stageCiCdCommand: '/markteplace-app-automation -b staging -a new-app -o Nilesh-M-Nair -ignore-npmrc'
               }
               ]
             };
