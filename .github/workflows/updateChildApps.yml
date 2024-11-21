@@ -14,7 +14,7 @@ jobs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
       ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
       #The above name will be used when committing the updates to the child apps
-      BoilerplateRepoName: "marketplace-boilerplate-rnd"
+      BoilerplateRepoName: "nextjs-bolilerplate"
     steps:
       - uses: actions/github-script@v6
         id: getConfigs
@@ -58,7 +58,7 @@ jobs:
       - name: Clone the parent repository (boilerplate)
         run: |
           mkdir -p ../boilerplate
-          git clone --branch feature/git_workflow_test https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/marketplace-boilerplate-rnd.git ../boilerplate/marketplace-boilerplate-rnd
+          git clone --branch feature/git_workflow_test https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/nextjs-bolilerplate.git ../boilerplate/nextjs-bolilerplate
 
       # Clone the child repository
       - name: Clone the child repository ${{ matrix.appName }}
@@ -93,7 +93,7 @@ jobs:
       - name: Apply boilerplate changes to the child repo
         working-directory: ../${{ matrix.repoName }}
         run: |
-          rsync -av --exclude='.git' "${{ github.workspace }}/../boilerplate/marketplace-boilerplate-rnd/" . || { echo "Rsync of boilerplate failed"; exit 1; }
+          rsync -av --exclude='.git' "${{ github.workspace }}/../boilerplate/nextjs-bolilerplate/" . || { echo "Rsync of boilerplate failed"; exit 1; }
           if [ -d "boilerplate-overrides" ]; then
             rsync -av boilerplate-overrides/ . || { echo "Rsync of boilerplate-overrides failed"; exit 1; }
           else
