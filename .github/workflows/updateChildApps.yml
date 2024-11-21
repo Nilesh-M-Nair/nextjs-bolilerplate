@@ -1,33 +1,51 @@
 name: 'Update Child Apps'
 on:
   push:
-    branches: main  # Trigger when parent repo's main branch is pushed
+    branches: feature/git_workflow_poc
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
+  # Testing
   configurations:
     runs-on: ubuntu-latest
     outputs:
       ChildAppsList: ${{ steps.getConfigs.outputs.ChildAppsList }}
-      GithubUserId: ${{ steps.getConfigs.outputs.GithubUserId }}
-      GithubUserEmailId: "nilesh.m.nair@gmail.com"
-      GithubUserName: "Nilesh-M-Nair"
-      BoilerplateRepoName: "nextjs-bolilerplate"
+      ChildAppsCiCdCommands: ${{ steps.getConfigs.outputs.ChildAppsCiCdCommands }}
+      #The above name will be used when committing the updates to the child apps
+      BoilerplateRepoName: "marketplace-boilerplate-rnd"
     steps:
       - uses: actions/github-script@v6
         id: getConfigs
         with:
           script: |
-            const githubUserIdForCommits = 'nilesh-m-nair';
             const appListMatrix = {
               include: [{
                 appName: 'nextjs-app-1',
-                repoName: 'nextjs-app-1',
-                repoLink: 'Nilesh-M-Nair/nextjs-app-1'
-              }]
+                repoName: 'marketplace-nextjs-app-1',
+                repoLink: '@github.com/Nilesh-M-Nair/marketplace-nextjs-app-1.git',
+                devCiCdCommand: '/markteplace-app-automation -b development -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc',
+                stageCiCdCommand: '/markteplace-app-automation -b staging -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc'
+              },
+              {
+                appName: 'anothernextjs-app-2',
+                repoName: 'marketplace-anothernextjs-app-2',
+                repoLink: '@github.com/Nilesh-M-Nair/marketplace-anothernextjs-app-2.git',
+                devCiCdCommand: '/markteplace-app-automation -b development -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc',
+                stageCiCdCommand: '/markteplace-app-automation -b staging -a marketplace-new-app -o Nilesh-M-Nair -ignore-npmrc'
+              }
+              ]
             };
-            core.setOutput('ChildAppsList', JSON.stringify(appListMatrix));
-            core.setOutput('GithubUserId', githubUserIdForCommits);
+            core.setOutput('ChildAppsList', appListMatrix);
+            core.setOutput('ChildAppsCiCdCommands', appListMatrix.include.reduce(function(allCommands, app){
+              return allCommands = allCommands + app.devCiCdCommand + "\n" + app.stageCiCdCommand + "\n";
+            }, ""));
           result-encoding: string
+      - name: CICD Commands of All the Ecommerce Apps.
+        run: |
+          echo "Once all the jobs are completed, execute all the below commands in the #marketplace-app-deployment-notifications channel in slack for deploying all the apps to dev and stage"
+          echo "${{steps.getConfigs.outputs.ChildAppsCiCdCommands}}"
 
   UpdatingChildApps:
     runs-on: ubuntu-latest
@@ -35,96 +53,191 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.configurations.outputs.ChildAppsList) }}
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Pass the GitHub token for CLI authentication
+      ACTIONS_STEP_DEBUG: true
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all branches and history
+      - name: Clone the parent repository (boilerplate)
+        run: |
+          mkdir -p ../boilerplate
+          git clone --branch feature/git_workflow_test https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/marketplace-boilerplate-rnd.git ../boilerplate/marketplace-boilerplate-rnd
 
+      # Clone the child repository
       - name: Clone the child repository ${{ matrix.appName }}
         run: |
-          cd ..
-          git clone https://${{ secrets.GH_PAT }}@github.com/${{ matrix.repoLink }}.git || { echo "Failed to clone repository: ${{ matrix.repoLink }}"; exit 1; }
-          cd ./${{ matrix.repoName }}/
-          git config user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
-          git config user.name "${{ needs.configurations.outputs.GithubUserName }}"
+          git clone https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git ../${{ matrix.repoName }} || { echo "Failed to clone repository: ${{ matrix.repoName }}"; exit 1; }
 
+      # Set Git author identity
       - name: Set Git author identity
         run: |
-          git config --local user.email "${{ needs.configurations.outputs.GithubUserEmailId }}"
-          git config --local user.name "${{ needs.configurations.outputs.GithubUserName }}"
+          git config --global user.name "'github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create and switch to feature branch in the child repo
+      # Fetch and Reset to Remote Branch
+      - name: Fetch and Reset to Remote Branch
+        working-directory: ../${{ matrix.repoName }}
         run: |
-          git fetch --all
-          if git show-ref --quiet refs/remotes/origin/feature/updates-from-boilerplate; then
-            git switch feature/updates-from-boilerplate
+          git fetch origin feature/updates-from-boilerplate || git fetch origin main
+          if git rev-parse --verify origin/feature/updates-from-boilerplate; then
+            git checkout feature/updates-from-boilerplate
+            git reset --hard origin/feature/updates-from-boilerplate
           else
-            git switch -c feature/updates-from-boilerplate origin/main
-            git push --set-upstream origin feature/updates-from-boilerplate || { echo "Failed to push new feature branch"; exit 1; }
+            git checkout -b feature/updates-from-boilerplate origin/main
           fi
 
-      - name: Apply boilerplate changes to the child repo
+      # Clean Working Directory
+      - name: Clean Working Directory
+        working-directory: ../${{ matrix.repoName }}
         run: |
-          rsync -av --exclude='.git' ../${{ needs.configurations.outputs.BoilerplateRepoName }}/ . || { echo "Rsync of boilerplate failed"; exit 1; }
+          git clean -fdx
+          git reset --hard
+
+      - name: Apply boilerplate changes to the child repo
+        working-directory: ../${{ matrix.repoName }}
+        run: |
+          rsync -av --exclude='.git' "${{ github.workspace }}/../boilerplate/marketplace-boilerplate-rnd/" . || { echo "Rsync of boilerplate failed"; exit 1; }
           if [ -d "boilerplate-overrides" ]; then
             rsync -av boilerplate-overrides/ . || { echo "Rsync of boilerplate-overrides failed"; exit 1; }
           else
             echo "boilerplate-overrides directory not found, skipping copy."
           fi
 
+      # Commit and push changes to the feature branch
       - name: Commit and push changes to the feature branch
+        working-directory: ../${{ matrix.repoName }}
         run: |
           git add .
           git commit -m "Updates taken from boilerplate" || echo "No changes to commit."
-          git push origin feature/updates-from-boilerplate || { echo "Failed to push changes to feature branch"; exit 1; }
+          git pull --rebase origin feature/updates-from-boilerplate || true
+          git push origin feature/updates-from-boilerplate
 
-      - name: Create PR from feature to development
-        id: pr_feature_to_dev
-        run: |
-          pr_url=$(gh pr create -B development -H feature/updates-from-boilerplate -t "Merge feature into development" -b "Auto PR to merge feature into development" --repo "${{ matrix.repoLink }}" | tee)
-          echo "Pull request URL: $pr_url"
-          pr_number=$(echo "$pr_url" | sed -n 's#.*/pull/\([0-9]*\).*#\1#p')
-          echo "Extracted PR number: $pr_number"
-          if [ -z "$pr_number" ]; then
-            echo "Error: PR number could not be extracted. Exiting."
-            exit 1
-          fi
-          echo "::set-output name=PR_NUMBER::$pr_number"
+      - name: Check for existing PR
+        id: check_existing_pr
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            const existingPRs = await github.rest.pulls.list({
+              owner: 'Nilesh-M-Nair',
+              repo: '${{ matrix.repoName }}',
+              head: 'Nilesh-M-Nair:feature/updates-from-boilerplate',
+              base: 'development',
+            });
 
-      - name: Debugging - Show PR number
-        run: |
-          echo "Captured PR number: ${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }}"
+            if (existingPRs.data.length > 0) {
+              console.log(PR already exists: ${existingPRs.data[0].html_url});
+              core.setOutput('pr_exists', 'true');
+              core.setOutput('pr_number', existingPRs.data[0].number);
+            } else {
+              core.setOutput('pr_exists', 'false');
+            }
 
-      - name: Merge PR from feature to development
-        run: |
-          if [ -z "${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }}" ]; then
-            echo "Error: PR number is missing. Exiting."
-            exit 1
-          fi
-          gh pr merge ${{ steps.pr_feature_to_dev.outputs.PR_NUMBER }} --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to development for ${{ matrix.repoName }}"; exit 1; }
+      # Create Pull Request from feature branch to development
+      - name: Create Pull Request from feature to development
+        if: ${{ steps.check_existing_pr.outputs.pr_exists == 'false' }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            try {
+                const { data: pr } = await github.rest.pulls.create({
+                owner: 'Nilesh-M-Nair',
+                repo: '${{ matrix.repoName }}',
+                title: 'Automated PR for changes from feature to development',
+                head: 'feature/updates-from-boilerplate',
+                base: 'development',
+                body: 'This PR is automatically created to merge changes from feature branch into development.',
+              });
+              core.setOutput('pr_number', pr.data.number);
+              console.log(Created PR #${pr});
+            } catch (error) {
+              console.log(error)
+              if (error.status === 422) {
+                console.log('Pull request already exists or no changes to create a PR.');
+              } else {
+                throw error;
+              }
+            }
 
-      - name: Create PR from development to staging
-        id: pr_dev_to_stage
-        run: |
-          pr_url=$(gh pr create -B staging -H development -t "Merge development into staging" -b "Auto PR to merge development into staging" --repo "${{ matrix.repoLink }}" | tee)
-          echo "Pull request URL: $pr_url"
-          pr_number=$(echo "$pr_url" | sed -n 's#.*/pull/\([0-9]*\).*#\1#p')
-          echo "Extracted PR number: $pr_number"
-          if [ -z "$pr_number" ]; then
-            echo "Error: PR number could not be extracted. Exiting."
-            exit 1
-          fi
-          echo "::set-output name=PR_NUMBER::$pr_number"
+      # Merge the PR from feature to development
+      - name: Merge the Pull Request from feature to development
+        if: steps.create_pr.outputs.pr_number != ''
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            const pr_number = ${{ steps.create_pr.outputs.pr_number }};
+            await github.pulls.merge({
+              owner: 'Nilesh-M-Nair',
+              repo: '${{ matrix.repoName }}',
+              pull_number: pr_number,
+              merge_method: 'squash',
+            });
 
-      - name: Merge PR from development to staging
-        run: |
-          if [ -z "${{ steps.pr_dev_to_stage.outputs.PR_NUMBER }}" ]; then
-            echo "Error: PR number is missing. Exiting."
-            exit 1
-          fi
-          gh pr merge ${{ steps.pr_dev_to_stage.outputs.PR_NUMBER }} --squash --auto --repo "${{ matrix.repoLink }}" || { echo "Failed to merge PR to staging for ${{ matrix.repoName }}"; exit 1; }
+      # # Create Pull Request from development to staging
+      # - name: Create Pull Request from development to staging
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.GH_PAT }}
+      #     script: |
+      #       try {
+      #           const { data: pr } = await github.rest.pulls.create({
+      #           owner: 'Nilesh-M-Nair',
+      #           repo: '${{ matrix.repoName }}',
+      #           title: 'Automated PR for changes from development to staging',
+      #           head: 'development',
+      #           base: 'staging',
+      #           body: 'This PR is automatically created to merge changes from development branch into staging.',
+      #         });
+      #       } catch (error) {
+      #        console.log(error)
+      #         if (error.status === 422) {
+      #           console.log('Pull request already exists or no changes to create a PR.');
+      #         } else {
+      #           throw error;
+      #         }
+      #       }
 
+      # # Merge the PR from 
+      # - name: Merge the Pull Request from development to staging
+      #   if: steps.create_pr.outputs.pr_number != ''
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.GH_PAT }}
+      #     script: |
+      #       const pr_number = ${{ steps.create_pr.outputs.pr_number }};
+      #       await github.pulls.merge({
+      #         owner: 'Nilesh-M-Nair',
+      #         repo: '${{ matrix.repoName }}',
+      #         pull_number: pr_number,
+      #         merge_method: 'squash',
+      #       });
+
+      # # Create Pull Request from staging branch to main
+      # - name: Create Pull Request from staging to main
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.GH_PAT }}
+      #     script: |
+      #       try {
+      #           const { data: pr } = await github.rest.pulls.create({
+      #           owner: 'Nilesh-M-Nair',
+      #           repo: '${{ matrix.repoName }}',
+      #           title: 'Automated PR for changes from staging to main',
+      #           head: 'staging',
+      #           base: 'main',
+      #           body: 'This PR is automatically created to merge changes from staging branch into main.',
+      #         });
+      #         core.setOutput('pr_number', pr.data.number);
+      #         console.log(Created PR #${pr});
+      #       } catch (error) {
+      #         console.log(error)
+      #         if (error.status === 422) {
+      #           console.log('Pull request already exists or no changes to create a PR.');
+      #         } else {
+      #           throw error;
+      #         }
+      #       }
+
+      # Deploy from staging branch
       - name: Deploy from staging branch
         run: |
           echo "Deploying from staging branch"
