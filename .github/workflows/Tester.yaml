@@ -58,8 +58,8 @@ jobs:
       - name: Ensure Branch Exists and Commit Changes
         working-directory: ../${{ matrix.repoName }}
         run: |
-          # Stash uncommitted changes if any
-          git stash || true
+          # Stash both tracked and untracked changes
+          git stash push --include-untracked || true
       
           # Check if the branch exists remotely
           if git ls-remote --exit-code origin feature/updates-from-boilerplate; then
