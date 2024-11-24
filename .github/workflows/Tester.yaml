@@ -22,11 +22,6 @@ jobs:
                   appName: 'nextjs-app-1',
                   repoName: 'nextjs-app-1',
                   repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-1.git'
-                },
-                {
-                  appName: 'nextjs-app-2',
-                  repoName: 'nextjs-app-2',
-                  repoLink: 'github.com/Nilesh-M-Nair/nextjs-app-2.git'
                 }
               ]
             };
