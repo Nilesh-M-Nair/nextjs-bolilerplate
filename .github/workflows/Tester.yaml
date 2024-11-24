@@ -58,9 +58,22 @@ jobs:
       - name: Commit and Push Changes
         working-directory: ../${{ matrix.repoName }}
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure the branch exists
+          if git ls-remote --exit-code origin feature/updates-from-boilerplate; then
+            git checkout feature/updates-from-boilerplate
+          else
+            git checkout -b feature/updates-from-boilerplate
+          fi
+      
+          # Sync changes and push
           git add .
           git commit -m "Sync changes from boilerplate" || echo "No changes to commit."
-          git push origin feature/updates-from-boilerplate
+          git pull --rebase origin feature/updates-from-boilerplate || true
+          git push --set-upstream origin feature/updates-from-boilerplate
+        
 
       - name: Create or Update PR
         uses: actions/github-script@v6
