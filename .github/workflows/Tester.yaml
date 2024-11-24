@@ -37,6 +37,12 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.configurations.outputs.ChildAppsList) }}
     steps:
+      # Set Git author identity
+      - name: Set Git author identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Clone Boilerplate Repo
         run: |
           git clone --branch main https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/nextjs-bolilerplate.git ../boilerplate
