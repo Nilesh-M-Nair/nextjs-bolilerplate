@@ -10,39 +10,33 @@ jobs:
   configurations:
     runs-on: ubuntu-latest
     outputs:
-      app_list_matrix: ${{ steps.set_env.outputs.app_list_matrix }}
-      ci_cd_commands: ${{ steps.set_env.outputs.ci_cd_commands }}
-
+      child_apps_list: ${{ steps.json_variables.outputs.ChildAppsList }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Load App List Matrix
-        id: set_env
-        run: |
-          appListMatrix=$(jq -c '.' .github/config/appListMatrix.json)
-          echo "APP_LIST_MATRIX=$appListMatrix" >> $GITHUB_ENV
+      - name: Load Sync Variables
+        id: json_variables
+        uses: jnus/json-variables@v1.0
+        with:
+          scope: Sync
+          configFile: 'sync-variables.json'
+          secrets: '${{ toJson(secrets) }}'
 
-          ciCdCommands=$(echo "$appListMatrix" | jq -r '.include[] | .devCiCdCommand + "\n" + .stageCiCdCommand' | tr '\n' ' ')
-          echo "APP_LIST_MATRIX=$appListMatrix" >> $GITHUB_ENV
-          echo "CI_CD_COMMANDS=$ciCdCommands" >> $GITHUB_ENV
-        env:
-          APP_LIST_MATRIX: $APP_LIST_MATRIX
-          CI_CD_COMMANDS: $CI_CD_COMMANDS
+      - name: Debug Loaded Variables
+        run: |
+          echo "Boilerplate Repo Name: ${{ env.BoilerplateRepoName }}"
+          echo "Child Apps List: ${{ env.ChildAppsList }}"
 
   update-child-apps:
     runs-on: ubuntu-latest
     needs: configurations
     strategy:
-      matrix: ${{ fromJson(needs.configurations.outputs.app_list_matrix) }}
-    env:
-      ACTIONS_STEP_DEBUG: true
-      CI_CD_COMMANDS: ${{ needs.configurations.outputs.ci_cd_commands }}
+      matrix: ${{ fromJson(needs.configurations.outputs.child_apps_list) }}
     steps:
-      - name: Display Environment Variables
+      - name: Display Matrix Variables
         run: |
-          echo "App List Matrix: ${{ matrix }}"
-          echo "CI/CD Commands: $CI_CD_COMMANDS"
+          echo "Processing repo: ${{ matrix.repoName }}"
 
       # Set Git author identity
       - name: Set Git author identity
