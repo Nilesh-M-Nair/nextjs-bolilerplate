@@ -20,7 +20,7 @@ jobs:
         uses: jnus/json-variables@v1.0
         with:
           scope: Sync
-          configFile: 'sync-variables.json'
+          configFile: 'appListMatrix.json'
           secrets: '${{ toJson(secrets) }}'
 
       - name: Debug Loaded Variables
