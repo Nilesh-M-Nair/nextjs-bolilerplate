@@ -20,7 +20,10 @@ jobs:
       - name: Load App List Matrix
         id: set_env
         run: |
-          appListMatrix=$(cat .github/config/appListMatrix.json)
+          run: |
+            appListMatrix=$(cat .github/config/appListMatrix.json)
+            echo "APP_LIST_MATRIX=$appListMatrix" >> $GITHUB_ENV
+
           ciCdCommands=$(echo "$appListMatrix" | jq -r '.include[] | .devCiCdCommand + "\n" + .stageCiCdCommand' | tr '\n' ' ')
           echo "APP_LIST_MATRIX=$appListMatrix" >> $GITHUB_ENV
           echo "CI_CD_COMMANDS=$ciCdCommands" >> $GITHUB_ENV
