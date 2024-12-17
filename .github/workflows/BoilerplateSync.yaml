@@ -9,32 +9,37 @@ on:
 jobs:
   configurations:
     runs-on: ubuntu-latest
+    outputs:
+      app_list_matrix: ${{ steps.set_env.outputs.app_list_matrix }}
+      ci_cd_commands: ${{ steps.set_env.outputs.ci_cd_commands }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Load App List Matrix
-        id: getConfigs
+        id: set_env
         run: |
           appListMatrix=$(cat .github/config/appListMatrix.json)
           ciCdCommands=$(echo "$appListMatrix" | jq -r '.include[] | .devCiCdCommand + "\n" + .stageCiCdCommand' | tr '\n' ' ')
           echo "APP_LIST_MATRIX=$appListMatrix" >> $GITHUB_ENV
           echo "CI_CD_COMMANDS=$ciCdCommands" >> $GITHUB_ENV
+        env:
+          APP_LIST_MATRIX: $APP_LIST_MATRIX
+          CI_CD_COMMANDS: $CI_CD_COMMANDS
 
   update-child-apps:
     runs-on: ubuntu-latest
     needs: configurations
     strategy:
-      matrix: ${{ fromJson(env.APP_LIST_MATRIX) }}
+      matrix: ${{ fromJson(needs.configurations.outputs.app_list_matrix) }}
     env:
       ACTIONS_STEP_DEBUG: true
-      APP_LIST_MATRIX: ${{ env.APP_LIST_MATRIX }}
-      CI_CD_COMMANDS: ${{ env.CI_CD_COMMANDS }}
+      CI_CD_COMMANDS: ${{ needs.configurations.outputs.ci_cd_commands }}
     steps:
       - name: Display Environment Variables
         run: |
-          echo "App List Matrix: $APP_LIST_MATRIX"
+          echo "App List Matrix: ${{ matrix }}"
           echo "CI/CD Commands: $CI_CD_COMMANDS"
 
       # Set Git author identity
