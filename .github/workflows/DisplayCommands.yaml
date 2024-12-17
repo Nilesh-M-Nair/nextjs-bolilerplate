@@ -1,0 +1,15 @@
+name: "Display CI/CD Commands"
+
+on:
+  repository_dispatch:
+    types:
+      - display-ci-cd-commands
+
+jobs:
+  configurations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display CI/CD Commands
+        run: |
+          echo "Once all jobs are completed, run these commands:"
+          echo "${{ github.event.client_payload.ciCdCommands }}"
