@@ -57,7 +57,7 @@ jobs:
 
       - name: Clone Boilerplate Repo (Parent Repo)
         run: |
-          git clone --branch main https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/marketplace-boilerplate-rnd.git ../boilerplate
+          git clone --branch main https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git ../boilerplate
 
       - name: Clone Child Repo ${{ matrix.appName }}
         run: |
