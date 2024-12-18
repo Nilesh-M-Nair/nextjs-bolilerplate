@@ -13,28 +13,18 @@ jobs:
       boilerplate_repo_name: ${{ steps.set_variables.outputs.boilerplate_repo_name }}
       child_apps_list: ${{ steps.set_variables.outputs.child_apps_list }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Load Variables from JSON
+      - name: Load Variables from GitHub
         id: set_variables
         run: |
-          # Read and extract JSON values
-          boilerplate_repo_name=$(jq -r '.BoilerplateRepoName' .github/config/appListMatrix.json)
-          child_apps_list=$(jq -c '.ChildAppsList' .github/config/appListMatrix.json)
-
-          # Export variables to environment files
-          echo "boilerplate_repo_name=$boilerplate_repo_name" >> $GITHUB_ENV
-          echo "child_apps_list=$child_apps_list" >> $GITHUB_ENV
-
-          # Use output environment file for job-level outputs
-          echo "boilerplate_repo_name=$boilerplate_repo_name" >> $GITHUB_OUTPUT
-          echo "child_apps_list=$child_apps_list" >> $GITHUB_OUTPUT
+          # Load variables from the environment
+          echo "boilerplate_repo_name=${{ vars.BOILERPLATE_REPO_NAME }}" >> $GITHUB_OUTPUT
+          echo "child_apps_list=${{ vars.CHILD_APPS_LIST }}" >> $GITHUB_OUTPUT
 
       - name: Debug Loaded Variables
         run: |
-          echo "Boilerplate Repo Name: $boilerplate_repo_name"
-          echo "Child Apps List: $child_apps_list"
+          echo "Boilerplate Repo Name: ${{ vars.BOILERPLATE_REPO_NAME }}"
+          echo "Child Apps List: ${{ vars.CHILD_APPS_LIST }}"
+  
 
   update-child-apps:
     runs-on: ubuntu-latest
