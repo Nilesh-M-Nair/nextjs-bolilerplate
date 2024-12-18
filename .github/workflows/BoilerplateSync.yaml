@@ -13,18 +13,17 @@ jobs:
       boilerplate_repo_name: ${{ steps.set_variables.outputs.boilerplate_repo_name }}
       child_apps_list: ${{ steps.set_variables.outputs.child_apps_list }}
     steps:
-      - name: Load Variables from GitHub
-        id: set_variables
-        run: |
-          # Load variables from the environment
-          echo "boilerplate_repo_name=${{ vars.BOILERPLATE_REPO_NAME }}" >> $GITHUB_OUTPUT
-          echo "child_apps_list=${{ vars.CHILD_APPS_LIST }}" >> $GITHUB_OUTPUT
+        - name: Load Variables from GitHub
+          id: set_variables
+          run: |
+            # Load variables from the environment
+            echo "boilerplate_repo_name=${{ vars.BOILERPLATE_REPO_NAME }}" >> $GITHUB_OUTPUT
+            echo "child_apps_list=${{ vars.CHILD_APPS_LIST }}" >> $GITHUB_OUTPUT
 
-      - name: Debug Loaded Variables
-        run: |
-          echo "Boilerplate Repo Name: ${{ vars.BOILERPLATE_REPO_NAME }}"
-          echo "Child Apps List: ${{ vars.CHILD_APPS_LIST }}"
-  
+        - name: Debug Loaded Variables
+          run: |
+            echo "Boilerplate Repo Name: ${{ vars.BOILERPLATE_REPO_NAME }}"
+            echo "Child Apps List: ${{ vars.CHILD_APPS_LIST }}"
 
   update-child-apps:
     runs-on: ubuntu-latest
