@@ -46,8 +46,8 @@ jobs:
     steps:
       - name: Debug Matrix Data
         run: |
-          echo "Repo Name: ${{ matrix.repoName }}"
-          echo "Repo Link: ${{ matrix.repoLink }}"
+          echo "Repo Name: ${{ matrix.childApp.repoName }}"
+          echo "Repo Link: ${{ matrix.childApp.repoLink }}"
 
       # Set Git author identity
       - name: Set Git author identity
@@ -57,26 +57,26 @@ jobs:
 
       - name: Clone Boilerplate Repo (Parent Repo)
         run: |
-          git clone --branch main https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ matrix.repoName }}.git ../boilerplate
+          git clone --branch main https://${{ secrets.GH_PAT }}@github.com/Nilesh-M-Nair/${{ needs.configurations.outputs.boilerplate_repo_name }}.git ../boilerplate
 
-      - name: Clone Child Repo ${{ matrix.appName }}
+      - name: Clone Child Repo ${{ matrix.childApp.appName }}
         run: |
-          git clone https://${{ secrets.GH_PAT }}@${{ matrix.repoLink }} ../${{ matrix.repoName }}
+          git clone https://${{ secrets.GH_PAT }}@${{ matrix.childApp.repoLink }} ../${{ matrix.childApp.repoName }}
 
       - name: Apply Parent Repo Changes
         run: |
-          rsync -av --exclude='.git' --exclude='.github' --exclude='.vscode'  ../boilerplate/ ../${{ matrix.repoName }}
+          rsync -av --exclude='.git' --exclude='.github' --exclude='.vscode'  ../boilerplate/ ../${{ matrix.childApp.repoName }}
 
       - name: Reapply Custom Overrides from boilerplate-override
         run: |
-          if [ -d ../${{ matrix.repoName }}/boilerplate-override ]; then
-              rsync -av --exclude='.git' --exclude='.github' --exclude='.vscode' ../${{ matrix.repoName }}/boilerplate-override/ ../${{ matrix.repoName }}
+          if [ -d ../${{ matrix.childApp.repoName }}/boilerplate-override ]; then
+              rsync -av --exclude='.git' --exclude='.github' --exclude='.vscode' ../${{ matrix.childApp.repoName }}/boilerplate-override/ ../${{ matrix.childApp.repoName }}
           else
-              echo "No boilerplate-override directory found for ${{ matrix.repoName }}."
+              echo "No boilerplate-override directory found for ${{ matrix.childApp.repoName }}."
           fi
 
       - name: Ensure Branch Exists and Commit Changes
-        working-directory: ../${{ matrix.repoName }}
+        working-directory: ../${{ matrix.childApp.repoName }}
         run: |
           # Stash both tracked and untracked changes
           git stash push --include-untracked || true
@@ -103,7 +103,7 @@ jobs:
           script: |
             const pr = await github.rest.pulls.create({
               owner: 'Nilesh-M-Nair',
-              repo: '${{ matrix.repoName }}',
+              repo: '${{ matrix.childApp.repoName }}',
               title: 'Automated PR for boilerplate updates',
               head: 'feature/updates-from-boilerplate',
               base: 'development',
@@ -118,14 +118,14 @@ jobs:
           script: |
             const pr = await github.rest.pulls.list({
                 owner: 'Nilesh-M-Nair',
-                repo: '${{ matrix.repoName }}',
+                repo: '${{ matrix.childApp.repoName }}',
                 head: 'Nilesh-M-Nair:feature/updates-from-boilerplate',
                 base: 'development',
             });
             if (pr.data.length > 0) {
               await github.rest.pulls.merge({
                 owner: 'Nilesh-M-Nair',
-                repo: '${{ matrix.repoName }}',
+                repo: '${{ matrix.childApp.repoName }}',
                 pull_number: pr.data[0].number,
                 merge_method: 'squash',
               });
@@ -141,7 +141,7 @@ jobs:
           script: |
             const pr = await github.rest.pulls.create({
                 owner: 'Nilesh-M-Nair',
-                repo: '${{ matrix.repoName }}',
+                repo: '${{ matrix.childApp.repoName }}',
                 title: 'Automated PR from development to staging for boilerplate updates',
                 head: 'development',
                 base: 'staging',
@@ -156,14 +156,14 @@ jobs:
           script: |
             const pr = await github.rest.pulls.list({
                 owner: 'Nilesh-M-Nair',
-                repo: '${{ matrix.repoName }}',
+                repo: '${{ matrix.childApp.repoName }}',
                 head: 'Nilesh-M-Nair:development',
                 base: 'staging',
             });
             if (pr.data.length > 0) {
                 await github.rest.pulls.merge({
                 owner: 'Nilesh-M-Nair',
-                repo: '${{ matrix.repoName }}',
+                repo: '${{ matrix.childApp.repoName }}',
                 pull_number: pr.data[0].number,
                 merge_method: 'squash',
                 });
@@ -179,7 +179,7 @@ jobs:
           script: |
             const pr = await github.rest.pulls.create({
                 owner: 'Nilesh-M-Nair',
-                repo: '${{ matrix.repoName }}',
+                repo: '${{ matrix.childApp.repoName }}',
                 title: 'Automated PR from staging to main for boilerplate updates',
                 head: 'staging',
                 base: 'main',
