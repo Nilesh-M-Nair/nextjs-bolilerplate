@@ -40,11 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: configurations
     strategy:
-      matrix: ${{ fromJson(needs.configurations.outputs.child_apps_list) }}
+      matrix: ${{ fromJson(needs.configurations.outputs.child_apps_list || '[]') }}    
     steps:
-      - name: Display Matrix Variables
+      - name: Debug Matrix Data
         run: |
-          echo "Processing repo: ${{ matrix.repoName }}"
+          echo "Repo Name: ${{ matrix.repoName }}"
+          echo "Repo Link: ${{ matrix.repoLink }}"
 
       # Set Git author identity
       - name: Set Git author identity
