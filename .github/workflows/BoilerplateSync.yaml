@@ -20,7 +20,7 @@ jobs:
         id: set_variables
         run: |
           # Read and extract JSON values
-          boilerplate_repo_name=$(jq -r '.BoilerplateRepoName' .github/config/appListMatrix.json)
+          boilerplate_repo_name=$(jq -r '.nextjs-bolilerplate' .github/config/appListMatrix.json)
           child_apps_list=$(jq -c '.ChildAppsList' .github/config/appListMatrix.json)
 
           # Export variables to environment files

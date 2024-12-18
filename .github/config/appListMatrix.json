@@ -1,7 +1,7 @@
 {
   "BoilerplateRepoName": "marketplace-boilerplate-rnd",
   "ChildAppsList": [
-  {
+    {
       "appName": "child-repo-1",
       "repoName": "marketplace-appfromboilerplate-rnd",
       "repoLink": "github.com/Nilesh-M-Nair/marketplace-appfromboilerplate-rnd.git",
