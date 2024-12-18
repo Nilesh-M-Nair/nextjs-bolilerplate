@@ -1,0 +1,20 @@
+{
+  "BoilerplateRepoName": "marketplace-boilerplate-rnd",
+  "ChildAppsList": [
+  {
+      "appName": "child-repo-1",
+      "repoName": "marketplace-appfromboilerplate-rnd",
+      "repoLink": "github.com/Nilesh-M-Nair/marketplace-appfromboilerplate-rnd.git",
+      "devCiCdCommand": "/markteplace-app-automation -b development -a new-app -o Nilesh-M-Nair -ignore-npmrc",
+      "stageCiCdCommand": "/markteplace-app-automation -b staging -a new-app -o Nilesh-M-Nair -ignore-npmrc"
+    },
+    {
+      "appName": "child-repo-2",
+      "repoName": "marketplace-anotherappfromboilerplate-rnd",
+      "repoLink": "github.com/Nilesh-M-Nair/marketplace-anotherappfromboilerplate-rnd.git",
+      "devCiCdCommand": "/markteplace-app-automation -b development -a new-app -o Nilesh-M-Nair -ignore-npmrc",
+      "stageCiCdCommand": "/markteplace-app-automation -b staging -a new-app -o Nilesh-M-Nair -ignore-npmrc"
+    }
+  ]
+}
+

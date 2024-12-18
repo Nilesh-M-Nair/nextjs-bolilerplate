@@ -3,30 +3,38 @@ name: "Sync Changes to Child Repo"
 on:
   push:
     branches:
-      - feature/git_workflow_poc
+      - main
   workflow_dispatch:
 
 jobs:
   configurations:
     runs-on: ubuntu-latest
     outputs:
-      child_apps_list: ${{ steps.json_variables.outputs.ChildAppsList }}
+      boilerplate_repo_name: ${{ steps.set_variables.outputs.boilerplate_repo_name }}
+      child_apps_list: ${{ steps.set_variables.outputs.child_apps_list }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Load Sync Variables
-        id: json_variables
-        uses: jnus/json-variables@v1.0
-        with:
-          scope: Sync
-          configFile: 'appListMatrix.json'
-          secrets: '${{ toJson(secrets) }}'
+      - name: Load Variables from JSON
+        id: set_variables
+        run: |
+          # Read and extract JSON values
+          boilerplate_repo_name=$(jq -r '.BoilerplateRepoName' .github/config/sync-variables.json)
+          child_apps_list=$(jq -c '.ChildAppsList' .github/config/sync-variables.json)
+
+          # Export variables to environment files
+          echo "boilerplate_repo_name=$boilerplate_repo_name" >> $GITHUB_ENV
+          echo "child_apps_list=$child_apps_list" >> $GITHUB_ENV
+
+          # Use output environment file for job-level outputs
+          echo "boilerplate_repo_name=$boilerplate_repo_name" >> $GITHUB_OUTPUT
+          echo "child_apps_list=$child_apps_list" >> $GITHUB_OUTPUT
 
       - name: Debug Loaded Variables
         run: |
-          echo "Boilerplate Repo Name: ${{ env.BoilerplateRepoName }}"
-          echo "Child Apps List: ${{ env.ChildAppsList }}"
+          echo "Boilerplate Repo Name: $boilerplate_repo_name"
+          echo "Child Apps List: $child_apps_list"
 
   update-child-apps:
     runs-on: ubuntu-latest
